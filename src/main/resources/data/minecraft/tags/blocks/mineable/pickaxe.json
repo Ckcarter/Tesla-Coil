@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "teslacoil:tesla_coil",
+    "teslacoil:creative_power_block",
+    "teslacoil:tesla_coil_middle",
+    "teslacoil:tesla_coil_top"
+  ]
+}

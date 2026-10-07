@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " E ",
+    "CRC",
+    "IBI"
+  ],
+  "key": {
+    "E": { "item": "minecraft:end_rod" },
+    "C": { "item": "minecraft:copper_ingot" },
+    "R": { "item": "minecraft:redstone_block" },
+    "I": { "item": "minecraft:iron_ingot" },
+    "B": { "item": "minecraft:iron_block" }
+  },
+  "result": { "item": "teslacoil:tesla_coil", "count": 1 }
+}
