@@ -1,0 +1,12 @@
+{
+  "charge_hum": {
+    "sounds": [
+      "teslacoil:charge_hum"
+    ]
+  },
+  "plasma_snap": {
+    "sounds": [
+      "teslacoil:plasma_snap"
+    ]
+  }
+}

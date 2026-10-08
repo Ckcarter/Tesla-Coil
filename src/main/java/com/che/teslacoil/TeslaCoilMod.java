@@ -4,6 +4,7 @@ import com.che.teslacoil.registry.ModBlockEntities;
 import com.che.teslacoil.registry.ModBlocks;
 import com.che.teslacoil.registry.ModItems;
 import com.che.teslacoil.registry.ModMenus;
+import com.che.teslacoil.sound.ModSounds.ModSounds;
 import com.che.teslacoil.network.ModNetworking;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -38,6 +39,7 @@ public class TeslaCoilMod {
         ModItems.ITEMS.register(bus);
         ModBlockEntities.BLOCK_ENTITIES.register(bus);
         ModMenus.MENUS.register(bus);
+        ModSounds.register(bus);
         TABS.register(bus);
         ModNetworking.register();
     }

@@ -1,6 +1,8 @@
 package com.che.teslacoil.blockentity;
 
 import com.che.teslacoil.registry.ModBlockEntities;
+import com.che.teslacoil.sound.ModSounds.ModSounds;
+import net.minecraft.sounds.SoundSource;
 import com.che.teslacoil.network.ModNetworking;
 import com.che.teslacoil.network.TeslaArcPacket;
 import net.minecraftforge.network.PacketDistributor;
@@ -10,9 +12,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
@@ -33,7 +34,7 @@ public class TeslaCoilBlockEntity extends BlockEntity {
     public static final int RANGE = 15;
     public static final int CAPACITY = 100_000;
     public static final int ENERGY_PER_STRIKE = 2_500;
-    public static final int ATTACK_INTERVAL = 10;
+    public static final int ATTACK_INTERVAL = 60;
 
     private UUID ownerUUID;
     private final Set<UUID> whitelistedPlayers = new HashSet<>();
@@ -93,7 +94,27 @@ public class TeslaCoilBlockEntity extends BlockEntity {
 
     public static void serverTick(ServerLevel level, BlockPos pos,
                                   BlockState state, TeslaCoilBlockEntity coil) {
-        if (++coil.tickCounter < ATTACK_INTERVAL) return;
+        coil.tickCounter++;
+        if (coil.tickCounter == ATTACK_INTERVAL / 2
+                && coil.energy.getEnergyStored() >= ENERGY_PER_STRIKE) {
+            double x = pos.getX() + 0.5;
+            double y = pos.getY() + 0.8;
+            double z = pos.getZ() + 0.5;
+            boolean hasTarget = !level.getEntitiesOfClass(LivingEntity.class,
+                    new AABB(pos).inflate(RANGE),
+                    target -> target.isAlive()
+                            && (target instanceof Enemy || target instanceof ServerPlayer)
+                            && !target.isSpectator()
+                            && (coil.ownerUUID == null || !target.getUUID().equals(coil.ownerUUID))
+                            && !(target instanceof ServerPlayer
+                                    && coil.whitelistedPlayers.contains(target.getUUID()))
+                            && target.distanceToSqr(x, y, z) <= RANGE * RANGE).isEmpty();
+            if (hasTarget) {
+                level.playSound(null, pos, ModSounds.CHARGE_HUM.get(),
+                        SoundSource.BLOCKS, 0.8F, 1.0F);
+            }
+        }
+        if (coil.tickCounter < ATTACK_INTERVAL) return;
         coil.tickCounter = 0;
 
         if (coil.energy.getEnergyStored() < ENERGY_PER_STRIKE) return;
@@ -107,6 +128,7 @@ public class TeslaCoilBlockEntity extends BlockEntity {
                 LivingEntity.class,
                 area,
                 target -> target.isAlive()
+                        && (target instanceof Enemy || target instanceof ServerPlayer)
                         && !target.isSpectator()
                         && (coil.ownerUUID == null || !target.getUUID().equals(coil.ownerUUID))
                         && !(target instanceof ServerPlayer && coil.whitelistedPlayers.contains(target.getUUID()))
@@ -120,6 +142,8 @@ public class TeslaCoilBlockEntity extends BlockEntity {
         if (target == null) return;
 
         coil.energy.extractEnergy(ENERGY_PER_STRIKE, false);
+        level.playSound(null, pos, ModSounds.PLASMA_SNAP.get(),
+                SoundSource.BLOCKS, 1.1F, 0.95F);
 
         // Tell nearby clients to render a short-lived jagged arc from the top terminal to the victim.
         ModNetworking.CHANNEL.send(
@@ -131,11 +155,7 @@ public class TeslaCoilBlockEntity extends BlockEntity {
         // Extremely high damage: intended to make a powered coil lethal.
         target.hurt(level.damageSources().magic(), 1000.0F);
 
-        level.playSound(null, pos, SoundEvents.LIGHTNING_BOLT_IMPACT,
-                SoundSource.BLOCKS, 1.0F, 1.2F);
 
-        // Vanilla electric/lightning-style flash/sound event at the target.
-        level.levelEvent(3002, target.blockPosition(), 0);
 
         coil.setChanged();
     }
